@@ -1,24 +1,42 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 public class GameController : MonoBehaviour
 {
+    public static GameController Instance { get; private set; }
+
     [SerializeField] private GameObject pipePrefab;
     [SerializeField] private GameObject pipeSpawn;
     [SerializeField] private Transform pipeSpawnPos;
+    [SerializeField] private float pipeSpawnY = 2f;
     [SerializeField] private float spawnInterval = 2f;
-    public float timer = 0f;
+    private float timer = 2f;
 
+    public event Action<int> ScoreChanged;
+    public event Action Jumped;
+    public event Action Died;
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+    }
 
     // Start is called before the first frame update
     void Start()
     {
-        timer = spawnInterval; //so it spawns immediately
+        //timer = spawnInterval - 0.5f; //so it spawns immediately
     }
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
         //timer for every x seconds spawn pipe
         timer += Time.deltaTime;
@@ -26,11 +44,26 @@ public class GameController : MonoBehaviour
         {
             // Spawn pipe logic here
             //Debug.Log("Spawn Pipe");
-            Instantiate(pipePrefab, pipeSpawnPos.position, Quaternion.identity);
-            //change pipe spawn y between -3 and -5
-            float randomY = Random.Range(-5f, -2f);
+            //change pipe spawn y
+            float randomY = UnityEngine.Random.Range(pipeSpawnY, pipeSpawnY + 2f);
             pipeSpawnPos.position = new Vector2(pipeSpawnPos.position.x, randomY);
+            Instantiate(pipePrefab, pipeSpawnPos.position, Quaternion.identity);
             timer = 0f;
         }
+    }
+
+    public void OnScoreChanged(int newScore)
+    {
+        ScoreChanged?.Invoke(newScore);
+    }
+
+    public void OnJumped()
+    {
+        Jumped?.Invoke();
+    }
+
+    public void OnDied()
+    {
+        Died?.Invoke();
     }
 }
